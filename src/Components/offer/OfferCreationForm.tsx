@@ -183,6 +183,8 @@ const OfferCreationForm: React.FC = () => {
       if (nftAddress != false) 
         setProgressStep(1);
       // Step 2: Create Offer
+      console.log({nftAddress});
+      console.log({offerInitParams});
       let assembledCreateOfferTx = await client.create_offer({
         nft_contract: nftAddress,
         offer_params: offerInitParams

@@ -3,8 +3,9 @@ import { Navbar } from '../Components';
 import styles from '../styles/style';
 import TokenAdValidationSection from '../Components/offer/OfferAdValidationSection';
 import TokenDetailsSection from '../Components/offer/OfferDetailsSection';
+import TokenListingModal from '../Components/token/TokenListingModal';
 import { Button, Modal, TextInput } from '@mantine/core';
-import { IconSend } from '@tabler/icons-react';
+import { IconSend, IconTag } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
 import { Client } from "soroban-dsponsor";
 import {
@@ -19,6 +20,7 @@ const TokenPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const tokenData = JSON.parse(decodeURIComponent(searchParams.get('data') || '{}'));
   const [modalOpened, setModalOpened] = useState(false);
+  const [listingModalOpened, setListingModalOpened] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [externalLink, setExternalLink] = useState('');
   const { walletAddress , createAssembledTransaction} = useWallet();
@@ -98,17 +100,30 @@ const TokenPage: React.FC = () => {
           <div className="mt-2 text-sm text-gray-400">Token ID: {tokenData.id}</div>
           <div className="mt-2 text-xs text-purple-400">Owner: {tokenData.owner}</div>
           {tokenData.owner == walletAddress && (
-          <Button
-            color="violet"
-            size="lg"
-            radius="xl"
-            fullWidth
-            leftIcon={<IconSend size={22} />}
-            className="font-bold text-lg py-3 mt-8"
-            onClick={() => setModalOpened(true)}
-          >
-            Submit ad
-          </Button>
+            <div className="w-full max-w-md mt-8 space-y-4">
+              <Button
+                color="violet"
+                size="lg"
+                radius="xl"
+                fullWidth
+                leftIcon={<IconSend size={22} />}
+                className="font-bold text-lg py-3"
+                onClick={() => setModalOpened(true)}
+              >
+                Submit ad
+              </Button>
+              <Button
+                color="blue"
+                size="lg"
+                radius="xl"
+                fullWidth
+                leftIcon={<IconTag size={22} />}
+                className="font-bold text-lg py-3"
+                onClick={() => setListingModalOpened(true)}
+              >
+                List Token for Sale
+              </Button>
+            </div>
           )}
         </div>
         <Modal
@@ -155,6 +170,19 @@ const TokenPage: React.FC = () => {
             </form>
           </div>
         </Modal>
+
+        {/* Token Listing Modal */}
+        <TokenListingModal
+          opened={listingModalOpened}
+          onClose={() => setListingModalOpened(false)}
+          tokenData={{
+            id: Number(tokenData.id),
+            contractAddress: tokenData.contractAddress,
+            name: tokenData.name,
+            imageUrl: tokenData.imageUrl,
+          }}
+        />
+
         <div className="mt-10">
           <TokenAdValidationSection offerId={Number(tokenData.offerId)} tokenId={Number(tokenData.id)} nftContract={tokenData.contractAddress} offerProposals={[]} />
         </div>

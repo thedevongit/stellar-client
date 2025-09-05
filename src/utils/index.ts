@@ -17,7 +17,7 @@ export const utils = {
   chain: {
     // Testnets
     stellart: {
-      address: "CCHLMFB5BOUWWA6YWSCM33P7IXLDJSBRK2AQYFSBHPXMT3EJ7YUH5IU5",
+      address: "CCOWQULXM7GAFJT5ONVSCQSAOSCDZZQPBMMXACAQCTUDIRRK4VUFKJ53",
       rpc: "https://soroban-testnet.stellar.org",
       id: { chainId: 0 },
       networkPassphrase: WalletNetwork.TESTNET
@@ -28,7 +28,12 @@ export const utils = {
       id: { chainId: 0 },
       networkPassphrase: WalletNetwork.TESTNET
     },
-
+    marketplace: {
+      address: "CAHANKZQY2WQI5YON72ZNRO7CTBHYTA7I2H2TYUGXIEK4TKHLSHN335G",
+      rpc: "https://soroban-testnet.stellar.org",
+      id: { chainId: 0 },
+      networkPassphrase: WalletNetwork.TESTNET
+    },
   }
 
 }
@@ -40,6 +45,8 @@ export const getChainDatas = (chain: string): any => {
     case 'Stellar Testnet':
     case 'stellart':
       return utils.chain.stellart;
+    case 'marketplace':
+      return utils.chain.marketplace;
     default:
       return utils.chain.stellart;
   }

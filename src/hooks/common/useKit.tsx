@@ -41,13 +41,13 @@ export const useKit = (version: string, selectedWallet: string) => {
           new HanaModule(),
           new LedgerModule(),
           new WalletConnectModule({
-            url: "https://subsprotocol.com",
-            projectId: "a0fd1483122937b5cabbe0d85fa9c34e",
+            url: "https://siborg.io",
+            projectId: "d8c9d7bdb687c52ba3130babd2284979",
             method: WalletConnectAllowedMethods.SIGN,
-            description: `Subs is a decentralized subscripiton protocol that allow you to have reccuring payments and revenue streams.`,
-            name: "Subs",
+            description: `Siborg is a decentralized ad tokenization protocol`,
+            name: "Siborg",
             icons: [
-              "https://subsprotocol.com/assets/log-d474c84b.png",
+              "https://dsponsor.surge.sh/assets/logo-364e3c18.png",
             ],
             network: version == "testnet" ? WalletNetwork.TESTNET : WalletNetwork.PUBLIC as WalletNetwork,
           }),

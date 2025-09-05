@@ -274,12 +274,16 @@ export const StellarWalletProvider = ({
    * @returns - The signed XDR as a base64 string
    */
   async function sign(xdr: string): Promise<string> {
+    console.log("XDR to sign",xdr);
+    
     if (connected) {
       if (!walletKit) {
         throw new Error("Wallet kit is not initialized");
       }
       setTxStatus(TxStatus.SIGNING);
       try {
+        console.log("Wallet address to sign",walletAddress);
+        console.log("Network passphrase",getChainDatas(chain).networkPassphrase);
         let { signedTxXdr } = await walletKit.signTransaction(xdr, {
           address: walletAddress,
           networkPassphrase: getChainDatas(chain)
@@ -335,7 +339,7 @@ export const StellarWalletProvider = ({
       send_tx_response = await stellarRpc.sendTransaction(transaction);
     }
     if (send_tx_response.status !== "PENDING") {
-      let error = parseError(send_tx_response);
+      let error = parseError(send_tx_response as any);
       console.error(
         "Failed to send transaction: ",
         send_tx_response.hash,
@@ -382,7 +386,7 @@ export const StellarWalletProvider = ({
       return result;
     } else {
       console.log("Transaction failed: ", get_tx_response);
-      let error = parseError(get_tx_response);
+      let error = parseError(get_tx_response as any);
       console.error(`Transaction failed: `, hash, error);
       // setFailureMessage(ContractErrorType[error.type]);
       setTxStatus(TxStatus.FAIL);
@@ -451,6 +455,7 @@ export const StellarWalletProvider = ({
     assembled_tx: any,
   ) {
     try {
+      console.log("Assembled tx in invoke",assembled_tx);
       // const account = await stellarRpc.getAccount(walletAddress);
       // const tx_builder = new TransactionBuilder(account, {
       //   networkPassphrase: getChainDatas(chain).networkPassphrase,
