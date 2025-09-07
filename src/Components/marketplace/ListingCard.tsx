@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Badge, Text, Group, Stack, Modal, NumberInput, Alert } from '@mantine/core';
 import { IconShoppingCart, IconGavel, IconAlertCircle, IconClock } from '@tabler/icons-react';
 import { useWallet } from '../../web3';
-import { getChainDatas, stellarTokenDecimal } from '../../utils';
+import { getChainDatas, stellarTokenDecimal, getTokenSymbol, formatTokenAmount } from '../../utils';
 import { useDispatch } from 'react-redux';
 import { setNotification } from '../../stores/common';
 import { Client } from 'soroban-dsponsor-market';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { MoonPayBuyWidget } from '@moonpay/moonpay-react';
+import { IconCreditCard } from '@tabler/icons-react';
 
 interface ListingCardProps {
   listing: {
@@ -30,10 +32,33 @@ interface ListingCardProps {
 const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate }) => {
   const [buyModalOpened, setBuyModalOpened] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fiatVisible, setFiatVisible] = useState(false);
+  const [tokenSymbol, setTokenSymbol] = useState<string>('UNK');
+  const [tokenDecimals, setTokenDecimals] = useState<number>(6);
   const { walletAddress, createAssembledTransaction } = useWallet();
   const dispatch = useDispatch();
 
   const isOwner = walletAddress === listing.seller;
+
+  // Fetch token info
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      if (!walletAddress) return;
+      
+      try {
+        const [symbol, decimals] = await Promise.all([
+          getTokenSymbol('stellart', walletAddress, listing.currency),
+          stellarTokenDecimal('stellart', walletAddress, listing.currency)
+        ]);
+        setTokenSymbol(symbol);
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token info:', error);
+      }
+    };
+
+    fetchTokenInfo();
+  }, [walletAddress, listing.currency]);
 
   const handleBuy = async () => {
     if (!walletAddress) {
@@ -90,10 +115,8 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
     }
   };
 
-  const formatPrice = (price: bigint, currency: string) => {
-    // This would need to be implemented based on currency decimals
-    // For now, showing as is
-    return `${price.toString()} ${currency.slice(0, 4)}...`;
+  const formatPrice = (price: bigint) => {
+    return formatTokenAmount(price, tokenDecimals, tokenSymbol);
   };
 
   return (
@@ -131,13 +154,13 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
               <div>
                 <Text size="sm" color="dimmed">Price</Text>
                 <Text size="xl" weight={700} className="text-purple-400">
-                  {formatPrice(listing.price, listing.currency)}
+                  {formatPrice(listing.price)}
                 </Text>
               </div>
             </div>
 
             {/* Action Button */}
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
               {isOwner ? (
                 <Button 
                   variant="outline" 
@@ -149,15 +172,27 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
                   Your Listing
                 </Button>
               ) : (
-                <Button 
-                  color="violet" 
-                  fullWidth
-                  leftIcon={<IconShoppingCart size={16} />}
-                  onClick={() => setBuyModalOpened(true)}
-                  className="font-semibold"
-                >
-                  Buy Now
-                </Button>
+                <>
+                  <Button 
+                    color="violet" 
+                    fullWidth
+                    leftIcon={<IconShoppingCart size={16} />}
+                    onClick={() => setBuyModalOpened(true)}
+                    className="font-semibold"
+                  >
+                    Buy Now
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    color="gray" 
+                    fullWidth
+                    leftIcon={<IconCreditCard size={16} />}
+                    onClick={() => setFiatVisible(true)}
+                    className="font-semibold"
+                  >
+                    Buy with fiat
+                  </Button>
+                </>
               )}
             </div>
           </Stack>
@@ -217,7 +252,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
                 <div className="flex items-center gap-2">
                   <Text size="xs" color="dimmed">Price:</Text>
                   <Text size="md" weight={700} className="text-purple-400">
-                    {formatPrice(listing.price, listing.currency)}
+                    {formatPrice(listing.price)}
                   </Text>
                 </div>
               </div>
@@ -254,6 +289,14 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
           </Group>
         </div>
       </Modal>
+      <MoonPayBuyWidget
+        variant="overlay"
+        visible={fiatVisible}
+        onClose={async () => { setFiatVisible(false); }}
+        baseCurrencyCode="usd"
+        defaultCurrencyCode="xlm"
+        walletAddress={walletAddress || undefined}
+      />
     </>
   );
 };

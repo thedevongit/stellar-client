@@ -9,6 +9,7 @@ import { useSearchParams } from "react-router-dom";
 import { useOfferDetails } from "../hooks/offer/useOfferDetails";
 import { useSelector } from "react-redux";
 import Notifications from "../Components/common/Notif";
+import { Button, Group } from "@mantine/core";
 
 const OfferPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +18,6 @@ const OfferPage: React.FC = () => {
   const { data, loading, error } = useOfferDetails("stellart", creator || "", id || "");
   const { notification } = useSelector((state: any) => state.common);
 
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0f0f1a] text-white">
@@ -43,7 +43,7 @@ const OfferPage: React.FC = () => {
     <div className="min-h-screen bg-[#0f0f1a] text-white">
       {notification.isNotified && (
         <Notifications
-          type={notification.type}
+          type={notification.type} 
           message={notification.message}
         />
       )}

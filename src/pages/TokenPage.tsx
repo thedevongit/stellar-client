@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '../Components';
 import styles from '../styles/style';
 import TokenAdValidationSection from '../Components/offer/OfferAdValidationSection';
 import TokenDetailsSection from '../Components/offer/OfferDetailsSection';
 import TokenListingModal from '../Components/token/TokenListingModal';
 import { Button, Modal, TextInput } from '@mantine/core';
-import { IconSend, IconTag } from '@tabler/icons-react';
+import { IconSend, IconTag, IconX } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
 import { Client } from "soroban-dsponsor";
+import { Client as MarketplaceClient } from "soroban-dsponsor-market";
 import {
   getChainDatas,
 } from "../utils";
@@ -23,9 +24,54 @@ const TokenPage: React.FC = () => {
   const [listingModalOpened, setListingModalOpened] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [externalLink, setExternalLink] = useState('');
+  const [isOwner, setIsOwner] = useState(false);
+  const [isListed, setIsListed] = useState(false);
+  const [listingId, setListingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
   const { walletAddress , createAssembledTransaction} = useWallet();
   const { notification } = useSelector((state: any) => state.common);
   const dispatch = useDispatch();
+
+  // Check if user is owner and if token is listed
+  useEffect(() => {
+    const checkOwnershipAndListing = async () => {
+      if (!walletAddress || !tokenData.contractAddress) return;
+
+      try {
+        // Check if user is the owner
+        const isTokenOwner = tokenData.owner === walletAddress;
+        setIsOwner(isTokenOwner);
+
+        if (isTokenOwner) {
+          // Check if token is already listed
+          const marketplaceClient = new MarketplaceClient({
+            rpcUrl: getChainDatas('marketplace').rpc,
+            networkPassphrase: getChainDatas('marketplace').networkPassphrase,
+            contractId: getChainDatas('marketplace').address,
+            publicKey: walletAddress,
+          });
+
+          const allListingsTx = await marketplaceClient.get_all_listings();
+          const allListings = await allListingsTx.simulate();
+          
+          const tokenListing = allListings.result?.find((listing: any) => 
+            listing.nft_contract === tokenData.contractAddress && 
+            listing.token_id === Number(tokenData.id) &&
+            listing.active
+          );
+
+          if (tokenListing) {
+            setIsListed(true);
+            setListingId(tokenListing.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking ownership and listing status:', error);
+      }
+    };
+
+    checkOwnershipAndListing();
+  }, [walletAddress, tokenData.contractAddress, tokenData.owner, tokenData.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +123,50 @@ const TokenPage: React.FC = () => {
     }
   };
 
+  const handleCancelListing = async () => {
+    if (!walletAddress || !listingId) return;
+
+    setLoading(true);
+    try {
+      const marketplaceClient = new MarketplaceClient({
+        rpcUrl: getChainDatas('marketplace').rpc,
+        networkPassphrase: getChainDatas('marketplace').networkPassphrase,
+        contractId: getChainDatas('marketplace').address,
+        publicKey: walletAddress,
+      });
+
+      const assembledTx = await marketplaceClient.cancel_listing({
+        listing_id: listingId,
+        caller: walletAddress,
+      });
+
+      const result = await createAssembledTransaction(assembledTx);
+
+      if (result) {
+        dispatch(
+          setNotification({
+            isNotified: true,
+            type: "Success",
+            message: "Listing cancelled successfully!",
+          })
+        );
+        setIsListed(false);
+        setListingId(null);
+      }
+    } catch (error: any) {
+      console.error('Error cancelling listing:', error);
+      dispatch(
+        setNotification({
+          isNotified: true,
+          type: "Error",
+          message: error.message || 'Failed to cancel listing',
+        })
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#181926] py-10 px-4">
       {notification.isNotified && (
@@ -99,7 +189,7 @@ const TokenPage: React.FC = () => {
           <div className="mt-4 text-center text-lg font-semibold text-white/90">{tokenData.name}</div>
           <div className="mt-2 text-sm text-gray-400">Token ID: {tokenData.id}</div>
           <div className="mt-2 text-xs text-purple-400">Owner: {tokenData.owner}</div>
-          {tokenData.owner == walletAddress && (
+          {isOwner && (
             <div className="w-full max-w-md mt-8 space-y-4">
               <Button
                 color="violet"
@@ -112,17 +202,32 @@ const TokenPage: React.FC = () => {
               >
                 Submit ad
               </Button>
-              <Button
-                color="blue"
-                size="lg"
-                radius="xl"
-                fullWidth
-                leftIcon={<IconTag size={22} />}
-                className="font-bold text-lg py-3"
-                onClick={() => setListingModalOpened(true)}
-              >
-                List Token for Sale
-              </Button>
+              {isListed ? (
+                <Button
+                  color="red"
+                  size="lg"
+                  radius="xl"
+                  fullWidth
+                  leftIcon={<IconX size={22} />}
+                  className="font-bold text-lg py-3"
+                  onClick={handleCancelListing}
+                  loading={loading}
+                >
+                  Cancel Listing
+                </Button>
+              ) : (
+                <Button
+                  color="blue"
+                  size="lg"
+                  radius="xl"
+                  fullWidth
+                  leftIcon={<IconTag size={22} />}
+                  className="font-bold text-lg py-3"
+                  onClick={() => setListingModalOpened(true)}
+                >
+                  List Token for Sale
+                </Button>
+              )}
             </div>
           )}
         </div>

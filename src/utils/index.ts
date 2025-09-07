@@ -127,3 +127,44 @@ export const getNftAdmin = async (chain: string, user: string, nftContract: stri
   let admin = StellarSdk.scValToNative((result.result as StellarSdk.rpc.Api.SimulateHostFunctionResult).retval);
   return admin;
 }
+
+export const getTokenName = async (chain: string, user: string, tokenContract: string): Promise<string> => {
+  try {
+    const result = await stellarCall(chain, user, tokenContract, 'name');
+    let name = StellarSdk.scValToNative((result.result as StellarSdk.rpc.Api.SimulateHostFunctionResult).retval);
+    return name;
+  } catch (error) {
+    console.error('Error getting token name:', error);
+    return 'Unknown Token';
+  }
+}
+
+export const getTokenSymbol = async (chain: string, user: string, tokenContract: string): Promise<string> => {
+  try {
+    const result = await stellarCall(chain, user, tokenContract, 'symbol');
+    let symbol = StellarSdk.scValToNative((result.result as StellarSdk.rpc.Api.SimulateHostFunctionResult).retval);
+    return symbol;
+  } catch (error) {
+    console.error('Error getting token symbol:', error);
+    return 'UNK';
+  }
+}
+
+export const formatTokenAmount = (amount: bigint, decimals: number, symbol: string): string => {
+  const divisor = BigInt(10 ** decimals);
+  const wholePart = amount / divisor;
+  const fractionalPart = amount % divisor;
+  
+  if (fractionalPart === 0n) {
+    return `${wholePart.toString()} ${symbol}`;
+  }
+  
+  const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
+  const trimmedFractional = fractionalStr.replace(/0+$/, '');
+  
+  if (trimmedFractional === '') {
+    return `${wholePart.toString()} ${symbol}`;
+  }
+  
+  return `${wholePart.toString()}.${trimmedFractional} ${symbol}`;
+}

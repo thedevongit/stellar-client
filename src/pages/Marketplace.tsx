@@ -8,10 +8,12 @@ import {
 } from "../Components/marketplace";
 import { useMarketplace } from "../hooks/marketplace/useMarketplace";
 import { useWallet } from "../web3";
-import { Grid, Container, LoadingOverlay, Alert, Text } from "@mantine/core";
+import { Grid, Container, LoadingOverlay, Alert, Text, Button, Group } from "@mantine/core";
 import { IconAlertCircle, IconRefresh } from "@tabler/icons-react";
 import Notifications from "../Components/common/Notif";
 import styles from "../styles/style";
+import { MoonPayBuyWidget } from "@moonpay/moonpay-react";
+import { IconCreditCard } from "@tabler/icons-react";
 
 /**
  * Marketplace Component
@@ -20,6 +22,7 @@ import styles from "../styles/style";
 const Marketplace: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'listings' | 'auctions'>('all');
   const { walletAddress } = useWallet();
+  const [fiatVisible, setFiatVisible] = useState(false);
   const { listings, auctions, nftData, loading, error, refetch } = useMarketplace(walletAddress);
 
   const filteredListings = listings.filter(listing => listing.active);
@@ -91,6 +94,16 @@ const Marketplace: React.FC = () => {
       {/* Main Content Section */}
       <div className="w-full flex justify-center">
         <div className="w-full max-w-7xl py-8 px-4">
+          <div className="flex justify-end mb-4">
+            <Button
+              leftIcon={<IconCreditCard size={16} />}
+              color="violet"
+              onClick={() => setFiatVisible(true)}
+            >
+              Buy with fiat
+            </Button>
+          </div>
+
           {/* Filters */}
           <div className="mb-8">
             <MarketplaceFilters
@@ -143,6 +156,14 @@ const Marketplace: React.FC = () => {
           </div>
         </div>
       </div>
+      <MoonPayBuyWidget
+        variant="overlay"
+        visible={fiatVisible}
+        onClose={() => setFiatVisible(false)}
+        baseCurrencyCode="usd"
+        defaultCurrencyCode="usdc_stellar"
+        walletAddress={walletAddress || undefined}
+      />
       <Notifications />
     </div>
   );

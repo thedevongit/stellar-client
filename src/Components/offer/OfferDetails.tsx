@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Modal, Checkbox } from "@mantine/core";
 import { IconShoppingCart } from "@tabler/icons-react";
+import { IconCreditCard } from "@tabler/icons-react";
 import OfferDetailsSection from "./OfferDetailsSection";
 import { useTokenId } from "../../hooks/tokens/useTokenId";
 import "./OfferDetails.css";
@@ -14,6 +15,7 @@ import { useWallet } from "../../web3";
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { useDispatch } from "react-redux";
 import { setNotification } from "../../stores/common";
+import { MoonPayBuyWidget } from "@moonpay/moonpay-react";
 
 interface OfferDetailsProps {
   offer: {
@@ -47,6 +49,7 @@ interface OfferDetailsProps {
 
 const OfferDetails: React.FC<OfferDetailsProps> = ({ offer }) => {
   const [modalOpened, setModalOpened] = useState(false);
+  const [fiatVisible, setFiatVisible] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [approved, setApproved] = useState(false);
   const { walletAddress, createAssembledTransaction, stellarApprove } =
@@ -247,6 +250,25 @@ const OfferDetails: React.FC<OfferDetailsProps> = ({ offer }) => {
               >
                 Buy this offer
               </Button>
+              <Button
+                color="gray"
+                size="lg"
+                radius="xl"
+                fullWidth
+                leftIcon={<IconCreditCard size={20} />}
+                className="font-bold text-lg py-3 mt-3"
+                onClick={() => setFiatVisible(true)}
+              >
+                Buy with fiat
+              </Button>
+              <MoonPayBuyWidget
+                variant="overlay"
+                visible={fiatVisible}
+                onClose={async () => { setFiatVisible(false); }}
+                baseCurrencyCode="usd"
+                defaultCurrencyCode="xlm"
+                walletAddress={walletAddress || undefined}
+              />
               <Modal
                 opened={modalOpened}
                 onClose={() => {

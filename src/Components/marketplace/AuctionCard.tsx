@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Badge, Text, Group, Stack, Modal, NumberInput, Alert, Progress } from '@mantine/core';
-import { IconGavel, IconAlertCircle, IconClock, IconTrendingUp } from '@tabler/icons-react';
+import { IconGavel, IconAlertCircle, IconClock, IconTrendingUp, IconEye, IconCheck } from '@tabler/icons-react';
 import { useWallet } from '../../web3';
-import { getChainDatas, stellarTokenDecimal } from '../../utils';
+import { getChainDatas, stellarTokenDecimal, getTokenSymbol, formatTokenAmount } from '../../utils';
 import { useDispatch } from 'react-redux';
 import { setNotification } from '../../stores/common';
 import { Client } from 'soroban-dsponsor-market';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { MoonPayBuyWidget } from '@moonpay/moonpay-react';
+import { IconCreditCard } from '@tabler/icons-react';
 
 interface AuctionCardProps {
   auction: {
@@ -31,14 +33,39 @@ interface AuctionCardProps {
 
 const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate }) => {
   const [bidModalOpened, setBidModalOpened] = useState(false);
+  const [auctionDetailsModalOpened, setAuctionDetailsModalOpened] = useState(false);
   const [bidAmount, setBidAmount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+  const [tokenSymbol, setTokenSymbol] = useState<string>('UNK');
+  const [tokenDecimals, setTokenDecimals] = useState<number>(6);
   const { walletAddress, createAssembledTransaction } = useWallet();
   const dispatch = useDispatch();
+  const [fiatVisible, setFiatVisible] = useState(false);
 
   const isOwner = walletAddress === auction.seller;
   const isHighestBidder = walletAddress === auction.highest_bidder;
   const hasBids = auction.highest_bid > 0n;
+
+  // Fetch token info
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      if (!walletAddress) return;
+      
+      try {
+        const [symbol, decimals] = await Promise.all([
+          getTokenSymbol('stellart', walletAddress, auction.currency),
+          stellarTokenDecimal('stellart', walletAddress, auction.currency)
+        ]);
+        setTokenSymbol(symbol);
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token info:', error);
+      }
+    };
+
+    fetchTokenInfo();
+  }, [walletAddress, auction.currency]);
 
   const handleBid = async () => {
     if (!walletAddress) {
@@ -112,17 +139,68 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate })
     }
   };
 
-  const formatPrice = (price: bigint, currency: string) => {
-    // This would need to be implemented based on currency decimals
-    // For now, showing as is
-    return `${price.toString()} ${currency.slice(0, 4)}...`;
+  const handleFinalizeAuction = async () => {
+    if (!walletAddress) {
+      dispatch(
+        setNotification({
+          isNotified: true,
+          type: "Error",
+          message: "Please connect your wallet first",
+        })
+      );
+      return;
+    }
+
+    setFinalizing(true);
+    try {
+      const marketplaceClient = new Client({
+        rpcUrl: getChainDatas('marketplace').rpc,
+        networkPassphrase: getChainDatas('marketplace').networkPassphrase,
+        contractId: getChainDatas('marketplace').address,
+        publicKey: walletAddress,
+      });
+
+      const assembledTx = await marketplaceClient.finalize_auction({
+        auction_id: auction.id,
+        caller: walletAddress,
+      });
+
+      const result = await createAssembledTransaction(assembledTx);
+
+      if (result) {
+        dispatch(
+          setNotification({
+            isNotified: true,
+            type: "Success",
+            message: hasBids ? "Auction finalized successfully! NFT transferred to winner." : "Auction finalized. No bids received.",
+          })
+        );
+        setAuctionDetailsModalOpened(false);
+        onUpdate?.();
+      }
+    } catch (error: any) {
+      console.error('Error finalizing auction:', error);
+      dispatch(
+        setNotification({
+          isNotified: true,
+          type: "Error",
+          message: error.message || 'Failed to finalize auction',
+        })
+      );
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
+  const formatPrice = (price: bigint) => {
+    return formatTokenAmount(price, tokenDecimals, tokenSymbol);
   };
 
   const getMinBidAmount = () => {
     if (!hasBids) {
-      return Number(auction.reserve_price) / 1000000; // Assuming 6 decimals
+      return Number(auction.reserve_price) / (10 ** tokenDecimals);
     }
-    return (Number(auction.highest_bid) / 1000000) + 0.1; // 0.1 increment
+    return (Number(auction.highest_bid) / (10 ** tokenDecimals)) + 0.1; // 0.1 increment
   };
 
   return (
@@ -169,14 +247,14 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate })
               <div className="flex items-center justify-between">
                 <Text size="sm" color="dimmed">Current Bid</Text>
                 <Text size="lg" weight={700} className="text-orange-400">
-                  {hasBids ? formatPrice(auction.highest_bid, auction.currency) : 'No bids'}
+                  {hasBids ? formatPrice(auction.highest_bid) : 'No bids'}
                 </Text>
               </div>
               
               <div className="flex items-center justify-between">
                 <Text size="sm" color="dimmed">Reserve Price</Text>
                 <Text size="sm" className="text-gray-400">
-                  {formatPrice(auction.reserve_price, auction.currency)}
+                  {formatPrice(auction.reserve_price)}
                 </Text>
               </div>
 
@@ -195,8 +273,19 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate })
               )}
             </div>
 
-            {/* Action Button */}
-            <div className="pt-2">
+            {/* Action Buttons */}
+            <div className="pt-2 space-y-2">
+              <Button 
+                variant="outline" 
+                color="blue" 
+                fullWidth
+                leftIcon={<IconEye size={16} />}
+                onClick={() => setAuctionDetailsModalOpened(true)}
+                className="font-semibold"
+              >
+                View Auction
+              </Button>
+              
               {isOwner ? (
                 <Button 
                   variant="outline" 
@@ -287,13 +376,13 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate })
                   <div className="flex items-center gap-2">
                     <Text size="xs" color="dimmed">Current:</Text>
                     <Text size="sm" weight={600} className="text-orange-400">
-                      {hasBids ? formatPrice(auction.highest_bid, auction.currency) : 'No bids'}
+                      {hasBids ? formatPrice(auction.highest_bid) : 'No bids'}
                     </Text>
                   </div>
                   <div className="flex items-center gap-2">
                     <Text size="xs" color="dimmed">Reserve:</Text>
                     <Text size="xs" className="text-gray-400">
-                      {formatPrice(auction.reserve_price, auction.currency)}
+                      {formatPrice(auction.reserve_price)}
                     </Text>
                   </div>
                 </div>
@@ -344,9 +433,172 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate })
             >
               Place Bid
             </Button>
+            <Button 
+              variant="outline"
+              color="gray" 
+              onClick={() => setFiatVisible(true)}
+              leftIcon={<IconCreditCard size={16} />}
+              className="px-6"
+            >
+              Buy with fiat
+            </Button>
           </Group>
         </div>
       </Modal>
+
+      {/* Auction Details Modal */}
+      <Modal
+        opened={auctionDetailsModalOpened}
+        onClose={() => setAuctionDetailsModalOpened(false)}
+        title={null}
+        centered
+        size="lg"
+        overlayProps={{ blur: 4 }}
+        classNames={{ 
+          content: 'custom-modal-content',
+          body: 'p-0'
+        }}
+        withCloseButton={false}
+      >
+        <div className="bg-[#181926]/90 rounded-2xl shadow-2xl p-6 w-full max-w-2xl mx-auto relative">
+          <button
+            onClick={() => setAuctionDetailsModalOpened(false)}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl z-10"
+            aria-label="Close"
+            type="button"
+          >
+            &times;
+          </button>
+
+          <div className="w-full flex flex-col items-center gap-1 mb-6">
+            <div className="text-2xl font-extrabold text-white text-center mb-2">
+              Auction Details
+            </div>
+            <Text size="sm" c="dimmed" className="text-center">
+              Complete information about this NFT auction
+            </Text>
+          </div>
+
+          {/* NFT Preview */}
+          <div className="bg-[#23243a] rounded-xl p-6 mb-6 border border-orange-500/30">
+            <div className="flex items-start gap-6">
+              <div className="w-32 h-32 rounded-lg overflow-hidden border border-gray-700 flex-shrink-0">
+                <img 
+                  src={nftData?.imageUrl || '/placeholder-nft.png'} 
+                  alt={nftData?.name || 'NFT'} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Text size="xl" weight={700} className="text-white mb-2 truncate">
+                  {nftData?.name || `NFT #${auction.token_id.toString()}`}
+                </Text>
+                <Text size="sm" color="dimmed" className="mb-4">
+                  Token ID: {auction.token_id.toString()}
+                </Text>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Text size="sm" color="dimmed">Seller:</Text>
+                    <Text size="sm" className="text-white">
+                      {auction.seller.slice(0, 6)}...{auction.seller.slice(-4)}
+                    </Text>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Text size="sm" color="dimmed">Auction ID:</Text>
+                    <Text size="sm" className="text-white">#{auction.id}</Text>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Text size="sm" color="dimmed">Currency:</Text>
+                    <Text size="sm" className="text-white">{tokenSymbol}</Text>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Auction Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-[#23243a] rounded-xl p-4 border border-orange-500/30">
+              <Text size="sm" color="dimmed" className="mb-2">Current Bid</Text>
+              <Text size="xl" weight={700} className="text-orange-400">
+                {hasBids ? formatPrice(auction.highest_bid) : 'No bids yet'}
+              </Text>
+              {hasBids && auction.highest_bidder && (
+                <Text size="xs" color="dimmed" className="mt-1">
+                  by {auction.highest_bidder.slice(0, 6)}...{auction.highest_bidder.slice(-4)}
+                </Text>
+              )}
+            </div>
+            
+            <div className="bg-[#23243a] rounded-xl p-4 border border-orange-500/30">
+              <Text size="sm" color="dimmed" className="mb-2">Reserve Price</Text>
+              <Text size="xl" weight={700} className="text-gray-400">
+                {formatPrice(auction.reserve_price)}
+              </Text>
+              <Text size="xs" color="dimmed" className="mt-1">
+                Minimum bid required
+              </Text>
+            </div>
+          </div>
+
+          {/* Auction Status */}
+          <div className="bg-[#23243a] rounded-xl p-4 mb-6 border border-orange-500/30">
+            <div className="flex items-center justify-between mb-3">
+              <Text size="md" weight={600} className="text-white">Auction Status</Text>
+              <Badge color="orange" leftSection={<IconGavel size={12} />}>
+                Active
+              </Badge>
+            </div>
+            <Text size="sm" color="dimmed">
+              This auction is currently active and accepting bids. The seller can finalize the auction at any time.
+            </Text>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              color="gray" 
+              onClick={() => setAuctionDetailsModalOpened(false)}
+              className="flex-1"
+            >
+              Close
+            </Button>
+            
+            {isOwner ? (
+              <Button 
+                color="green" 
+                onClick={handleFinalizeAuction}
+                loading={finalizing}
+                leftIcon={<IconCheck size={16} />}
+                className="flex-1 font-semibold"
+              >
+                Finalize Auction
+              </Button>
+            ) : !isHighestBidder ? (
+              <Button 
+                color="orange" 
+                onClick={() => {
+                  setAuctionDetailsModalOpened(false);
+                  setBidModalOpened(true);
+                }}
+                leftIcon={<IconGavel size={16} />}
+                className="flex-1 font-semibold"
+              >
+                Place Bid
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </Modal>
+      <MoonPayBuyWidget
+        variant="overlay"
+        visible={fiatVisible}
+        onClose={async () => { setFiatVisible(false); }}
+        baseCurrencyCode="usd"
+        defaultCurrencyCode="xlm"
+        walletAddress={walletAddress || undefined}
+      />
     </>
   );
 };
