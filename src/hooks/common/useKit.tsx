@@ -10,7 +10,7 @@ import {
   XBULL_ID,
   xBullModule,
   RabetModule,
-} from "@creit.tech/stellar-wallets-kit/index";
+} from "@creit.tech/stellar-wallets-kit";
 import { LedgerModule } from "@creit.tech/stellar-wallets-kit/modules/ledger.module";
 import {
   WalletConnectAllowedMethods,

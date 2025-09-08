@@ -1,6 +1,6 @@
 {
   "index.css": {
-    "file": "assets/index-b13f0792.css",
+    "file": "assets/index-0fe97a67.css",
     "src": "index.css"
   },
   "index.html": {
@@ -11,17 +11,17 @@
       "assets/siborg-92b30eef.jpeg"
     ],
     "css": [
-      "assets/index-b13f0792.css"
+      "assets/index-0fe97a67.css"
     ],
     "dynamicImports": [
       "node_modules/@walletconnect/modal-ui/dist/index.js"
     ],
-    "file": "assets/index-f90c1571.js",
+    "file": "assets/index-4ec3b8f4.js",
     "isEntry": true,
     "src": "index.html"
   },
   "node_modules/@walletconnect/modal-ui/dist/index.js": {
-    "file": "assets/index-a9c03f49.js",
+    "file": "assets/index-63677d6b.js",
     "imports": [
       "index.html"
     ],

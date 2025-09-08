@@ -47,10 +47,14 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
       
       try {
         const [symbol, decimals] = await Promise.all([
-          getTokenSymbol('stellart', walletAddress, listing.currency),
-          stellarTokenDecimal('stellart', walletAddress, listing.currency)
+          getTokenSymbol('stellart', walletAddress || "GDK32MSNSWN4BXLISDVQSZRJNYE6FEN23MZ34535CN7W5WICB6WPEH4M", listing.currency),
+          stellarTokenDecimal('stellart', walletAddress || "GDK32MSNSWN4BXLISDVQSZRJNYE6FEN23MZ34535CN7W5WICB6WPEH4M", listing.currency)
         ]);
-        setTokenSymbol(symbol);
+        console.log(symbol, decimals);
+        
+        // Normalize native token naming to XLM for display
+        const normalizedSymbol = (symbol || '').toString().toLowerCase() === 'native' ? 'XLM' : symbol;
+        setTokenSymbol(normalizedSymbol);
         setTokenDecimals(Number(decimals));
       } catch (error) {
         console.error('Error fetching token info:', error);
@@ -59,6 +63,28 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, nftData, onUpdate })
 
     fetchTokenInfo();
   }, [walletAddress, listing.currency]);
+
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      if (walletAddress) return;
+      try {
+        const [symbol, decimals] = await Promise.all([
+          getTokenSymbol('stellart', walletAddress || "GDK32MSNSWN4BXLISDVQSZRJNYE6FEN23MZ34535CN7W5WICB6WPEH4M", listing.currency),
+          stellarTokenDecimal('stellart', walletAddress || "GDK32MSNSWN4BXLISDVQSZRJNYE6FEN23MZ34535CN7W5WICB6WPEH4M", listing.currency)
+        ]);
+        console.log(symbol, decimals);
+        
+        // Normalize native token naming to XLM for display
+        const normalizedSymbol = (symbol || '').toString().toLowerCase() === 'native' ? 'XLM' : symbol;
+        setTokenSymbol(normalizedSymbol);
+        setTokenDecimals(Number(decimals));
+      } catch (error) {
+        console.error('Error fetching token info:', error);
+      }
+    };
+
+    fetchTokenInfo();
+  }, []);
 
   const handleBuy = async () => {
     if (!walletAddress) {

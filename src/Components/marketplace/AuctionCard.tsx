@@ -57,7 +57,8 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, nftData, onUpdate })
           getTokenSymbol('stellart', walletAddress, auction.currency),
           stellarTokenDecimal('stellart', walletAddress, auction.currency)
         ]);
-        setTokenSymbol(symbol);
+        const normalizedSymbol = (symbol || '').toString().toLowerCase() === 'native' ? 'XLM' : symbol;
+        setTokenSymbol(normalizedSymbol);
         setTokenDecimals(Number(decimals));
       } catch (error) {
         console.error('Error fetching token info:', error);

@@ -30,14 +30,14 @@ export const useMarketplace = (walletAddress?: string): MarketplaceData => {
       // Use getTokenDetails like in useTokens
       const tokenDetails = await getTokenDetails(
         'stellart',
-        walletAddress || '',
+        walletAddress || 'GDK32MSNSWN4BXLISDVQSZRJNYE6FEN23MZ34535CN7W5WICB6WPEH4M',
         nftContract,
         Number(tokenId)
       );
 
       return {
         name: tokenDetails.name || `NFT #${tokenId.toString()}`,
-        imageUrl: tokenDetails.token_uri || '/placeholder-nft.png',
+        imageUrl: tokenDetails.token_uri || '/placeholder-nft.jpeg',
         description: '',
         owner: tokenDetails.owner || '',
       };
