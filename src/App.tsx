@@ -11,8 +11,8 @@ import { MoonPayProvider } from '@moonpay/moonpay-react';
  */
 const App: React.FC = () => {
   return (
-    <MoonPayProvider apiKey="pk_test_QUVvY3L2s9KA3xA6eJsDpsIhcxaK1BIA" debug>
-      <StellarWalletProvider version={"testnet"} chain={"stellart" as string}>
+    <MoonPayProvider apiKey="pk_live_R5Lf25uBfNZyKwccAZpzcxuL3ZdJ3Hc">
+      <StellarWalletProvider version={"mainnet"} chain={"stellart" as string}>
         <div className="min-h-screen flex flex-col">
           <Router>
             <div className="flex flex-col flex-1">

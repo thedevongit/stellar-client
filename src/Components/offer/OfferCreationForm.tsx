@@ -27,8 +27,8 @@ const imageRatios = [
 ];
 
 const currencies = [
-  { value: "USDS", label: "USDS", address: "CDN4DRIVEZMCMSMO2ZADNXBWO3JOT6NAN7GBEDUL2VTMOJ6QU65RBZGS" },
-  { value: "XLM", label: "XLM", address: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC" },
+  { value: "USDC", label: "USDC", address: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75" },
+  { value: "XLM", label: "XLM", address: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA" },
   { value: "custom", label: "Custom" },
 ];
 
@@ -57,7 +57,7 @@ const OfferCreationForm: React.FC = () => {
     startDate: null as Date | null,
     endDate: null as Date | null,
     price: 1,
-    currency: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    currency: 'CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA',
     royalties: 10,
     customCurrencyAddress: '',
   });
@@ -112,6 +112,7 @@ const OfferCreationForm: React.FC = () => {
   const stepAnimation = "transition-all duration-500 ease-in-out opacity-100 translate-y-0";
 
   const formatStellarData = async () : Promise<[InitParams,OfferInitParams]> => {
+    console.log("data formating");
     let decimal = await stellarTokenDecimal('stellart', walletAddress, form.currency);
     const initParams: InitParams = {
       name: form.title.toString() + " - " + "NFT",
@@ -169,6 +170,8 @@ const OfferCreationForm: React.FC = () => {
     try {
       // Step 1: Create NFT
       let [initParams, offerInitParams] = await formatStellarData();
+      console.log({initParams});
+      console.log({offerInitParams});
       let client = new Client({
         rpcUrl: getChainDatas('stellart').rpc,
         networkPassphrase: getChainDatas('stellart').networkPassphrase,

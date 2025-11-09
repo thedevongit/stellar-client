@@ -57,6 +57,7 @@ export const useTokens = (
             (result.result as StellarSdk.rpc.Api.SimulateHostFunctionResult)
               .retval
           );
+          console.log({tokenCount});
           let tokenAds = await getUserAdTokens(
             chain,
             user,

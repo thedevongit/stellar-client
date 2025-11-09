@@ -16,23 +16,29 @@ export const formatDecimal = (value: number) => {
 export const utils = {
   chain: {
     // Testnets
+    // stellart: {
+    //   address: "CCOWQULXM7GAFJT5ONVSCQSAOSCDZZQPBMMXACAQCTUDIRRK4VUFKJ53",
+    //   rpc: "https://soroban-testnet.stellar.org",
+    //   id: { chainId: 0 },
+    //   networkPassphrase: WalletNetwork.TESTNET
+    // },
     stellart: {
-      address: "CCOWQULXM7GAFJT5ONVSCQSAOSCDZZQPBMMXACAQCTUDIRRK4VUFKJ53",
-      rpc: "https://soroban-testnet.stellar.org",
+      address: "CDH3FBNCCBXJXVBME2CF4QZYS27RJFSUVXKRHD5DYVKCKQDCAK6UZBN3",
+      rpc: "https://soroban-rpc.creit.tech/",
       id: { chainId: 0 },
-      networkPassphrase: WalletNetwork.TESTNET
+      networkPassphrase: WalletNetwork.PUBLIC
     },
     factory: {
-      address: "CA5VFI7OQHQTXHVFTXRMGF3VD3MKDYI7QMZR2XXN6GLVMDZGSVD7JXYU",
-      rpc: "https://soroban-testnet.stellar.org",
+      address: "CAIFM7W2WMSIIDBPIACGG5FNXZ44DEPEYF7TDKIQ4BRNRT5E6VI33NWR",
+      rpc: "https://soroban-rpc.creit.tech/",
       id: { chainId: 0 },
-      networkPassphrase: WalletNetwork.TESTNET
+      networkPassphrase: WalletNetwork.PUBLIC
     },
     marketplace: {
-      address: "CAHANKZQY2WQI5YON72ZNRO7CTBHYTA7I2H2TYUGXIEK4TKHLSHN335G",
-      rpc: "https://soroban-testnet.stellar.org",
+      address: "CCPJBIVAAXV2N3XNUO4IKILPPP3NDMFBBT7TABY2DO6ABOKSDRMKZJDM",
+      rpc: "https://soroban-rpc.creit.tech/",
       id: { chainId: 0 },
-      networkPassphrase: WalletNetwork.TESTNET
+      networkPassphrase: WalletNetwork.PUBLIC
     },
   }
 
@@ -82,9 +88,8 @@ export const stellarLedgerExpiration = async (chain: string): Promise<number> =>
   return latestLedger.sequence;
 }
 
-// stellar allowance 
+// stellar token decimals get 
 export const stellarTokenDecimal = async (chain: string, user: string, token: string): Promise<any> => {
-  let stellarSC = getChainDatas(chain).address
   const result = await stellarCall(chain, user, token, 'decimals');
   let decimal = StellarSdk.scValToBigInt((result.result as StellarSdk.rpc.Api.SimulateHostFunctionResult).retval);
   return decimal;

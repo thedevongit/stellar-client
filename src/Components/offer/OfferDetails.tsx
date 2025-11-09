@@ -196,7 +196,7 @@ const OfferDetails: React.FC<OfferDetailsProps> = ({ offer }) => {
       <div className="flex-1 flex flex-col gap-6">
         <div>
           <a
-            href={`https://stellar.expert/explorer/testnet/account/${offer.id}`}
+            href={`https://stellar.expert/explorer/mainnet/account/${offer.id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-purple-400 hover:underline break-all"

@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
     <nav className=" w-full flex py-6 justify-between items-center navbar">
       <Modal opened={opened} onClose={close} radius={rem(20)} centered>
         <StellarProfileModal
-          version={"testnet"}
+          version={"mainnet"}
           address={walletAddress}
           close={close}
         />

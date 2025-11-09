@@ -18,8 +18,8 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 
 // Currency options (same as offer form)
 const currencies = [
-  { value: 'USDS', label: 'USDS', address: 'CDN4DRIVEZMCMSMO2ZADNXBWO3JOT6NAN7GBEDUL2VTMOJ6QU65RBZGS' },
-  { value: 'XLM', label: 'XLM', address: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC' },
+  { value: 'USDC', label: 'USDC', address: 'CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75' },
+  { value: 'XLM', label: 'XLM', address: 'CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA' },
   { value: 'custom', label: 'Custom' },
 ];
 
@@ -48,14 +48,14 @@ const TokenListingModal: React.FC<TokenListingModalProps> = ({
   // Direct listing form
   const [directListing, setDirectListing] = useState({
     price: 1,
-    currency: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    currency: 'CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA',
     customCurrencyAddress: '',
   });
 
   // Auction form
   const [auction, setAuction] = useState({
     reservePrice: 1,
-    currency: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    currency: 'CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA',
     customCurrencyAddress: '',
   });
 

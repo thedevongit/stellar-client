@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "npm run postinstall-dsponsor && npm run postinstall-dsponsor-market",
-    "postinstall-dsponsor": "stellar contract bindings typescript --rpc-url https://soroban-testnet.stellar.org:443 --network-passphrase \"Test SDF Network ; September 2015\" --contract-id CCOWQULXM7GAFJT5ONVSCQSAOSCDZZQPBMMXACAQCTUDIRRK4VUFKJ53 --output-dir node_modules/soroban-dsponsor --overwrite && cd node_modules/soroban-dsponsor && npm install && npm run build",
-    "postinstall-dsponsor-market": "stellar contract bindings typescript --rpc-url https://soroban-testnet.stellar.org:443 --network-passphrase \"Test SDF Network ; September 2015\" --contract-id CAHANKZQY2WQI5YON72ZNRO7CTBHYTA7I2H2TYUGXIEK4TKHLSHN335G --output-dir node_modules/soroban-dsponsor-market --overwrite && cd node_modules/soroban-dsponsor-market && npm install && npm run build",
+    "postinstall-dsponsor": "stellar contract bindings typescript --rpc-url https://soroban-rpc.creit.tech/ --network-passphrase \"Public Global Stellar Network ; September 2015\" --contract-id CDH3FBNCCBXJXVBME2CF4QZYS27RJFSUVXKRHD5DYVKCKQDCAK6UZBN3 --output-dir node_modules/soroban-dsponsor --overwrite && cd node_modules/soroban-dsponsor && npm install && npm run build",
+    "postinstall-dsponsor-market": "stellar contract bindings typescript --rpc-url https://soroban-rpc.creit.tech/ --network-passphrase \"Public Global Stellar Network ; September 2015\" --contract-id CCPJBIVAAXV2N3XNUO4IKILPPP3NDMFBBT7TABY2DO6ABOKSDRMKZJDM --output-dir node_modules/soroban-dsponsor-market --overwrite && cd node_modules/soroban-dsponsor-market && npm install && npm run build",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
